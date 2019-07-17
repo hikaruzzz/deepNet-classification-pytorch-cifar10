@@ -2,6 +2,8 @@
 # A customs deep network of classification, implemented by pytorch, with cifar-10 dataset.
 ## Architecture
 * about the model architecture, please reference model_units.py
+* Loss Function: nn.CrossEntropyLoss() 
+* optimizer = torch.optim.SGD
 ## Classes
 * train with CIFAR-10 dataset, the classes = ('Plane', 'Car', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship', 'Truck')
 ## How to Run
