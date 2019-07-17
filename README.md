@@ -2,6 +2,8 @@
 # A customs deep network of classification, implemented by pytorch, with cifar-10 dataset.
 ## Architecture
 * about the model architecture, please reference model_units.py
+## Classes
+* train with CIFAR-10 dataset, the classes = ('Plane', 'Car', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship', 'Truck')
 ## How to Run
 * install requirement environment  
  python = 3.6  
@@ -11,10 +13,12 @@
  PIL  
  tensorboardX (recommand) 
  cuda (recommand)  
-* launch train (if need to load checkpoint, revise the parameter in config.py)  
+* launch train   
+(if need to load checkpoint, revise the parameter in config.py)  
  (GPU) run `CUDA_VISIBLE_DEVICES=0 python train_units.py`  
  (CPU) run `python train_units.py`  
-* launch demo (if need to run demo with custom images, move the custom images to the path=./demo)  
+* launch demo   
+(if need to run demo with custom images, move the custom images to the path=./demo)  
  run `python demo.py`  
 
 ## Others
