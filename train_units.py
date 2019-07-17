@@ -1,20 +1,20 @@
-from model_units import *
 from load_data import *
 from config import *
 from torch.autograd import Variable
+from backbones import *
 import os
 import time
 import torch.optim
-import matplotlib.pyplot as plt
+
 #from tensorboardX import SummaryWriter
 
 '''
-使用Adam optimizer
+使用SGD optimizer
 '''
 
 
 # saver函数
-def save_models(epoch,acc):
+def save_models(epoch,acc,model_name):
     state = {
         'net': model_1.state_dict(),
         'acc': acc,
@@ -25,7 +25,7 @@ def save_models(epoch,acc):
     if not os.path.isdir(checkpoint_path):
         os.mkdir(checkpoint_path)
 
-    save_path = os.path.join(checkpoint_path, 'acc_{}_batch_s_{}_ckpt.pth'.format(acc, batch_size))
+    save_path = os.path.join(checkpoint_path, '{}_acc_{}_batch_s_{}_ckpt.pth'.format(model_name,acc, batch_size))
     torch.save(state,save_path)
     print("checkpoint saved in ./{}".format(save_path))
 
@@ -36,9 +36,8 @@ def test():
     i=0
     total = 0
     with torch.no_grad():
-        for i, (images, labels) in enumerate(test_loader): 
-            # len(test_loader)=batch_size???
-            # 一个batch_size给的，最终会把整个数据集跑一???
+        for i, (images, labels) in enumerate(test_loader):  # len(test_loader)=batch_size???
+            # 一个batch_size给的，最终会把整个数据集跑一遍
 
             if cuda_isavail:
                 images = Variable(images.cuda()) # 每一步把图像和标签移往GPU，在Variable中将它们封装
@@ -85,7 +84,7 @@ def train(epochs):
         total = 0
         time_s = time.time()
         i=0
-        for i,(images,labels) in enumerate(train_loader): # 每次读出一个batch size的数???len(train_loader)=total/batchsize
+        for i,(images,labels) in enumerate(train_loader): # 每次读出一个batch size的数据,len(train_loader)=total/batchsize
 
             if i % 100==0:
                 print("calc over step: {},time used: {:.0f} ms".format(100,(time.time() - time_s)*1000))
@@ -96,29 +95,29 @@ def train(epochs):
                 labels = Variable(labels.cuda())
 
 
-            # 清除所有累积梯???
+            # 清除所有累积梯度
             optimizer.zero_grad()
             # 用来自测试集的图像预测类
             outputs = model_1(images)
-            # 根据实际标签和预测值计算损???
+            # 根据实际标签和预测值计算损失
             loss = criterion(outputs, labels)
             # 后传，计算梯度？
             loss.backward()
-            # 按梯度调整参???
+            # 按梯度调整参数
             optimizer.step()
 
-            # train_loss,每step都叠加一次，所以对于每个step的真实loss???/ 相应的step数（i+1???
-            train_loss += loss.cpu().item()  # 直接???cuda 中取数据使用的方???为什么要 *???size
+            # train_loss,每step都叠加一次，所以对于每个step的真实loss要 / 相应的step数（i+1）
+            train_loss += loss.cpu().item()  # 直接从 cuda 中取数据使用的方法,为什么要 *上 size
             _, pred = torch.max(outputs.data, 1)
             total += labels.size(0)
             #print("x",total,"len(train_loader): ",len(train_loader)) # 最后一个step的batch_size != 正常的batchsize(不重复）
-            train_acc += torch.sum(pred == labels.data)  # 所有批次中的正确预测值相???
+            train_acc += torch.sum(pred == labels.data)  # 所有批次中的正确预测值相加
 
         # 利用optimizer.para_groups["lr"]来动态改变learn rate ，这是Adam optimizer专用
         #lr_adj = lr_adjust.adjust_learn_rate(epoch=epoch, lr=learn_rate)
         #optimizer.param_group["lr"] = lr_adj
-        # 计算模型???0000???实际batch_size*len(train_loader))训练图像上的准确率和损失???
-        # len（train_loader)*batch_size=总的step???最后一个step的batch_size不一???
+        # 计算模型在50000张(实际batch_size*len(train_loader))训练图像上的准确率和损失值
+        # len（train_loader)*batch_size=总的step数,最后一个step的batch_size不一样
         #print("len(train_loader)*batch_size: ",len(train_loader)*batch_size,"total: ",total)
         train_acc_avg = 100. * train_acc / total
         train_loss_avg = train_loss / (i+1)
@@ -128,7 +127,7 @@ def train(epochs):
 
         # 若测试准确率高于当前最高准确率，则保存模型
         if test_acc > best_acc:
-            save_models(epoch,test_acc)
+            save_models(epoch,test_acc,model_name)
             best_acc = test_acc
 
         print("Epoch {}, Train Accuracy avg: {:.3f}% , TrainLoss: {:.3f} , Test Accuracy: {:.3f}%".format(epoch, train_acc_avg, train_loss_avg,test_acc))
@@ -144,7 +143,19 @@ if __name__ == "__main__":
     print(">>> is cuda availavle = ", cuda_isavail)
 
     # create model
-    model_1 = SimpleNet(class_n=class_num)
+    if model_name == "xjbNet":
+        model_1 = XJBNet(class_n=class_num)
+    elif model_name == "ResNet50":
+        model_1 = ResNet50()
+    elif model_name == "MobileNetV2":
+        model_1 = MobileNetV2(num_classes=class_num)
+    elif model_name == "ResNet101":
+        model_1 = ResNet101()
+    elif model_name == "DPN":
+        model_1 = DPN92()
+    else:
+        assert 0, print("not found model")
+
 
     if cuda_isavail:
         model_1.cuda()

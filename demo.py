@@ -4,7 +4,7 @@ image show model /
 '''
 
 
-from model_units import *
+from backbones import *
 from config import *
 from PIL import Image
 import os
@@ -51,7 +51,19 @@ if __name__ == "__main__":
     print(">>> is cuda availavle = ", cuda_isavail)
 
     # create model
-    model_1 = SimpleNet(class_n=class_num)
+    if model_name == "xjbNet":
+        model_1 = XJBNet(class_n=class_num)
+    elif model_name == "ResNet50":
+        model_1 = ResNet50()
+    elif model_name == "MobileNetV2":
+        model_1 = MobileNetV2(num_classes=class_num)
+    elif model_name == "ResNet101":
+        model_1 = ResNet101()
+    elif model_name == "DPN":
+        model_1 = DPN92()
+    else:
+        assert 0, print("not found model")
+
     if cuda_isavail:
         model_1.cuda()
     else:
